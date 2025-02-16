@@ -12,7 +12,7 @@ const taskSchema = new Schema<TTask>(
       default: "pending",
     },
 
-    dueDate: { type: Number },
+    dueDate: { type: String },
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",

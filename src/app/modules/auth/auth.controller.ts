@@ -1,8 +1,10 @@
+/* eslint-disable no-unsafe-optional-chaining */
 import httpStatus from "http-status";
 import config from "../../config";
 import catchAsync from "../../shared/catchAsync";
 import sendResponse from "../../shared/sendResponse";
 import { AuthServices } from "./auth.service";
+import { TUser } from "../user/user.interface";
 
 const loginUser = catchAsync(async (req, res) => {
   const result = await AuthServices.loginUser(req.body);
@@ -24,6 +26,37 @@ const loginUser = catchAsync(async (req, res) => {
   });
 });
 
+const getProfile = catchAsync(async (req: any, res) => {
+  try {
+    const result = await AuthServices.getProfile(req);
+    sendResponse<any>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Profile Retrieved successfully !",
+      data: result,
+    });
+  } catch (err) {
+    console.log(err);
+  }
+});
+
+const updateProfile = catchAsync(async (req: any, res) => {
+  // const { userId } = req?.user;
+
+  // console.log(req?.body)
+  const updatedData = req.body;
+  const result = await AuthServices.updateUser(req, updatedData);
+
+  sendResponse<any>(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User updated successfully !",
+    data: result,
+  });
+});
+
 export const AuthController = {
   loginUser,
+  getProfile,
+  updateProfile
 };

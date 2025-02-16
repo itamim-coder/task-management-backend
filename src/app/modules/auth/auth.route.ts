@@ -4,18 +4,30 @@ import { UserValidation } from "../user/user.validation";
 import { UserController } from "../user/user.controller";
 import { AuthValidation } from "./auth.validation";
 import { AuthController } from "./auth.controller";
+import { USER_ROLE } from "../user/user.constant";
+import auth from "../../middlewares/auth";
 
 const router = express.Router();
 
 router.post(
-  "/signup",
+  "/register",
   validateRequest(UserValidation.createUserZodSchema),
   UserController.createUser
 );
 router.post(
-  "/signin",
+  "/login",
   validateRequest(AuthValidation.loginValidationSchema),
   AuthController.loginUser
+);
+router.put(
+  "/profile",
+  auth(USER_ROLE.admin, USER_ROLE.user),
+  AuthController.updateProfile
+);
+router.get(
+  "/profile",
+  auth(USER_ROLE.admin, USER_ROLE.user),
+  AuthController.getProfile
 );
 
 export const AuthRoutes = router;
