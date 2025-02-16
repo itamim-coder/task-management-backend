@@ -126,9 +126,45 @@ const forgotPassword = async (payload: { email: string }) => {
 
   console.log(resetPassLink);
 };
+
+const resetPassword = async (
+  token: string,
+  payload: { id: string; password: string }
+) => {
+  console.log({ token, payload });
+
+  const userData = await User.findOne({ _id: payload.id }).orFail();
+
+  // Verify reset token
+  const isValidToken = jwtHelpers.verifyToken(
+    token,
+    config.reset_pass_secret as string
+  );
+
+  if (!isValidToken) {
+    throw new AppError(httpStatus.FORBIDDEN, "Forbidden!");
+  }
+
+  // Ensure password is not undefined or empty
+  if (!payload.password) {
+    throw new AppError(httpStatus.BAD_REQUEST, "Password is required!");
+  }
+
+  // Update password in the database
+  await User.findByIdAndUpdate(
+    payload.id,
+    { password: payload.password },
+    { new: true, runValidators: true }
+  );
+
+  console.log("Password reset successful");
+};
+
+
 export const AuthServices = {
   loginUser,
   getProfile,
   updateUser,
   forgotPassword,
+  resetPassword
 };
