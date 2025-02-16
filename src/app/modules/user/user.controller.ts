@@ -17,28 +17,6 @@ const createUser = catchAsync(async (req, res) => {
   });
 });
 
-const getAllUsers = catchAsync(async (req, res) => {
-  const result = await UserServices.getAllUsers();
-
-  if (result.length > 0) {
-    sendResponse<TUser[]>(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: "User retrieved successfully !",
-
-      data: result,
-    });
-  } else {
-    sendResponse(res, {
-      statusCode: httpStatus.NOT_FOUND,
-      success: false,
-      message: "No User found!",
-      data: [],
-    });
-  }
-});
-
 export const UserController = {
   createUser,
-  getAllUsers,
 };

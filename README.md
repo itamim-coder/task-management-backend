@@ -10,8 +10,8 @@
 Clone the repo and install dependencies:
 
 ```bash
-git clone https://github.com/itamim-coder/event-ease-backend.git
-cd event-ease-backend
+git clone https://github.com/itamim-coder/task-management-backend
+cd task-management-backend
 npm install
 ```
 

@@ -9,7 +9,7 @@ import config from "../../config";
 import { TUser } from "../user/user.interface";
 import { jwtHelpers } from "../../helpers/jwtHelpers";
 import emailSender from "./sendMail";
-
+import * as bcrypt from "bcrypt";
 const loginUser = async (payload: TLoginUser) => {
   const { email, password } = payload;
 
@@ -18,13 +18,16 @@ const loginUser = async (payload: TLoginUser) => {
   if (!isUserExist) {
     throw new AppError(httpStatus.NOT_FOUND, "User does not exist");
   }
-
-  if (
-    isUserExist.password &&
-    !(await User.isPasswordMatched(password, isUserExist.password))
-  ) {
-    throw new AppError(httpStatus.UNAUTHORIZED, "Password is incorrect");
+  const isCorrectPassword: boolean = await bcrypt.compare(
+    payload.password,
+    isUserExist.password
+  );
+  console.log(payload.password);
+  console.log(isUserExist.password);
+  if (!isCorrectPassword) {
+    throw new Error("Password incorrect!");
   }
+
 
   const jwtPayload = {
     userId: isUserExist._id,
@@ -137,7 +140,7 @@ const resetPassword = async (
 
   // Verify reset token
   const isValidToken = jwtHelpers.verifyToken(
-    token,
+    token.replace("Bearer ", ""), // Remove "Bearer " prefix
     config.reset_pass_secret as string
   );
 
@@ -149,22 +152,22 @@ const resetPassword = async (
   if (!payload.password) {
     throw new AppError(httpStatus.BAD_REQUEST, "Password is required!");
   }
-
+  const hashedPassword = await bcrypt.hash(payload.password, 12);
+  console.log(hashedPassword);
   // Update password in the database
-  await User.findByIdAndUpdate(
+  const result = await User.findByIdAndUpdate(
     payload.id,
-    { password: payload.password },
+    { password: hashedPassword },
     { new: true, runValidators: true }
   );
-
+  console.log(result);
   console.log("Password reset successful");
 };
-
 
 export const AuthServices = {
   loginUser,
   getProfile,
   updateUser,
   forgotPassword,
-  resetPassword
+  resetPassword,
 };

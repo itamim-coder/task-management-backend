@@ -3,9 +3,15 @@
 import AppError from "../../errors/AppError";
 import { TUser } from "./user.interface";
 import { User } from "./user.model";
-
+import * as bcrypt from "bcrypt";
 const createUser = async (user: TUser): Promise<TUser | null> => {
-  const createdUser = await User.create(user);
+  const hashedPassword: string = await bcrypt.hash(user.password, 12);
+  const userData = {
+    username: user.username,
+    email: user.email,
+    password: hashedPassword
+  };
+  const createdUser = await User.create(userData);
 
   if (!createdUser) {
     throw new AppError(400, "Failed to create user!");
@@ -15,12 +21,8 @@ const createUser = async (user: TUser): Promise<TUser | null> => {
   return userWithoutPassword as unknown as TUser;
 };
 
-const getAllUsers = async () => {
-  const result = await User.find();
-  return result;
-};
 
 export const UserServices = {
   createUser,
-  getAllUsers,
+
 };
