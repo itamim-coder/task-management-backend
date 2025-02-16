@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable no-unsafe-optional-chaining */
 import httpStatus from "http-status";
 import config from "../../config";
@@ -5,6 +6,7 @@ import catchAsync from "../../shared/catchAsync";
 import sendResponse from "../../shared/sendResponse";
 import { AuthServices } from "./auth.service";
 import { TUser } from "../user/user.interface";
+import { Request, Response } from "express";
 
 const loginUser = catchAsync(async (req, res) => {
   const result = await AuthServices.loginUser(req.body);
@@ -55,8 +57,22 @@ const updateProfile = catchAsync(async (req: any, res) => {
   });
 });
 
+
+const forgotPassword = catchAsync(async (req: Request, res: Response) => {
+
+  await AuthServices.forgotPassword(req.body);
+
+  sendResponse<any>(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Check your email!",
+      data: null
+  })
+});
+
 export const AuthController = {
   loginUser,
   getProfile,
-  updateProfile
+  updateProfile,
+  forgotPassword
 };

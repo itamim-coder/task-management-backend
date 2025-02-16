@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from "http-status";
 import AppError from "../../errors/AppError";
@@ -6,6 +7,8 @@ import { TLoginUser } from "./auth.interface";
 import { createToken } from "./auth.utils";
 import config from "../../config";
 import { TUser } from "../user/user.interface";
+import { jwtHelpers } from "../../helpers/jwtHelpers";
+import emailSender from "./sendMail";
 
 const loginUser = async (payload: TLoginUser) => {
   const { email, password } = payload;
@@ -62,7 +65,7 @@ const updateUser = async (
   payload: Partial<TUser>
 ): Promise<TUser | null> => {
   const userId = authUser?.user?.userId;
-  
+
   if (!userId) {
     throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized request!");
   }
@@ -76,17 +79,56 @@ const updateUser = async (
   // Update user
   const result = await User.findByIdAndUpdate(userId, payload, {
     new: true,
-    runValidators: true
+    runValidators: true,
   });
 
   if (!result) {
-    throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, "Failed to update user.");
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to update user."
+    );
   }
 
   return result;
+};
+
+const forgotPassword = async (payload: { email: string }) => {
+  const userData = await User.findOne({ email: payload.email }).orFail();
+
+  const resetPassToken = jwtHelpers.generateToken(
+    { email: userData.email, role: userData.role },
+    config.reset_pass_secret as string,
+    config.reset_pass_token_expires_in as string
+  );
+  // console.log(resetPassToken);
+
+  const resetPassLink =
+    config.reset_pass_link + `?userId=${userData.id}&token=${resetPassToken}`;
+  // console.log(resetPassLink)
+  await emailSender(
+    userData.email,
+    `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
+    <h2 style="color: #333; text-align: center;">Reset Your Password</h2>
+    <p style="color: #555;">Dear User,</p>
+    <p style="color: #555;">We received a request to reset your password. Click the button below to proceed:</p>
+    <div style="text-align: center; margin: 20px 0;">
+      <a href="${resetPassLink}" style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-size: 16px; display: inline-block;">
+        Reset Password
+      </a>
+    </div>
+    <p style="color: #555;">If you did not request this, please ignore this email.</p>
+    <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+    <p style="color: #888; font-size: 12px; text-align: center;">© ${new Date().getFullYear()} TaskSphere. All rights reserved.</p>
+  </div>
+  `
+  );
+
+  console.log(resetPassLink);
 };
 export const AuthServices = {
   loginUser,
   getProfile,
   updateUser,
+  forgotPassword,
 };
